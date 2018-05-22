@@ -25,35 +25,33 @@ def combine(generator, discriminator):
     return gan
     
 
-def default_discriminator(myshape = (1, 28, 28)):
+def default_discriminator(myshape = 784):
     discriminator = Sequential()
-    discriminator.add(Conv2D(64, kernel_size=(5, 5), strides=(2, 2), \
-                             padding='same', input_shape=myshape, \
-                             kernel_initializer=initializers.RandomNormal(stddev=0.02)))
+    discriminator.add(Dense(1024, input_dim=myshape, kernel_initializer=initializers.RandomNormal(stddev=0.02)))
     discriminator.add(LeakyReLU(0.2))
     discriminator.add(Dropout(0.3))
-    discriminator.add(Conv2D(128, kernel_size=(5, 5), strides=(2, 2), padding='same'))
+    discriminator.add(Dense(512))
     discriminator.add(LeakyReLU(0.2))
     discriminator.add(Dropout(0.3))
-    discriminator.add(Flatten())
+    discriminator.add(Dense(256))
+    discriminator.add(LeakyReLU(0.2))
+    discriminator.add(Dropout(0.3))
     discriminator.add(Dense(1, activation='sigmoid'))
     discriminator.compile(loss='binary_crossentropy', optimizer=adam)
     return discriminator
     
 
-def default_generator():
+def default_generator(myshape):
     #See: https://github.com/Zackory/Keras-MNIST-GAN/blob/master/mnist_dcgan.py
     # Generator
     generator = Sequential()
-    generator.add(Dense(128*7*7, input_dim=randomDim, \
-                        kernel_initializer=initializers.RandomNormal(stddev=0.02)))
+    generator.add(Dense(256, input_dim=randomDim, kernel_initializer=initializers.RandomNormal(stddev=0.02)))
     generator.add(LeakyReLU(0.2))
-    generator.add(Reshape((128, 7, 7)))
-    generator.add(UpSampling2D(size=(2, 2)))
-    generator.add(Conv2D(64, kernel_size=(5, 5), padding='same'))
+    generator.add(Dense(512))
     generator.add(LeakyReLU(0.2))
-    generator.add(UpSampling2D(size=(2, 2)))
-    generator.add(Conv2D(1, kernel_size=(5, 5), padding='same', activation='tanh'))
+    generator.add(Dense(1024))
+    generator.add(LeakyReLU(0.2))
+    generator.add(Dense(myshape, activation='tanh'))
     generator.compile(loss='binary_crossentropy', optimizer=adam)
     return generator
 
@@ -62,11 +60,14 @@ def random_image(height, width):
 
 def train(X0, generator = None, discriminator = None, epochs=10, batchSize=128):
     X = (X0.astype(np.float32) - 127.5)/127.5
-    X = X[:, np.newaxis, :, :]
+    a = 1
+    for i in range(1,len(X.shape)):
+        a *= X.shape[i]
+    X = X.reshape(X.shape[0], a)
     if generator is None:
-        generator = default_generator()
+        generator = default_generator(a)
     if discriminator is None:
-        discriminator = default_discriminator(X.shape[1:])
+        discriminator = default_discriminator(a)
     dLosses = []
     gLosses = []
     gan = combine(generator, discriminator)
@@ -89,7 +90,7 @@ def train(X0, generator = None, discriminator = None, epochs=10, batchSize=128):
             # Labels for generated and real data
             yDis = np.zeros(2*batchSize)
             # One-sided label smoothing
-            yDis[:batchSize] = 0.9
+            yDis[:batchSize] = 0.1
 
             # Train discriminator
             discriminator.trainable = True
@@ -102,6 +103,7 @@ def train(X0, generator = None, discriminator = None, epochs=10, batchSize=128):
             gloss = gan.train_on_batch(noise, yGen)
 
         # Store loss of most recent batch from this epoch
+        print("dLoss: {}, gLoss: {}".format(dloss, gloss))
         dLosses.append(dloss)
         gLosses.append(gloss)
 

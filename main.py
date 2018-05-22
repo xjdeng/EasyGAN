@@ -11,9 +11,9 @@ from keras import initializers
 
 K.set_image_dim_ordering('th')
 
-adam = Adam(lr=0.0002, beta_1=0.5)
+default_adam = Adam(lr=0.0002, beta_1=0.5)
 
-def default_generator(randomDim = 100):
+def default_generator(randomDim = 100, adam = default_adam):
     #See: https://github.com/Zackory/Keras-MNIST-GAN/blob/master/mnist_dcgan.py
     # Generator
     generator = Sequential()

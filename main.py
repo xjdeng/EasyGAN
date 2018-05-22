@@ -11,9 +11,21 @@ from keras import initializers
 
 K.set_image_dim_ordering('th')
 
-default_adam = Adam(lr=0.0002, beta_1=0.5)
+adam = Adam(lr=0.0002, beta_1=0.5)
 
-def default_discriminator(adam = default_adam):
+randomDim = 100
+
+def combine(generator, discriminator):
+    discriminator.trainable = False
+    ganInput = Input(shape=(randomDim,))
+    x = generator(ganInput)
+    ganOutput = discriminator(x)
+    gan = Model(inputs=ganInput, outputs=ganOutput)
+    gan.compile(loss='binary_crossentropy', optimizer=adam)
+    return gan
+    
+
+def default_discriminator():
     discriminator = Sequential()
     discriminator.add(Conv2D(64, kernel_size=(5, 5), strides=(2, 2), padding='same', input_shape=(1, 28, 28), kernel_initializer=initializers.RandomNormal(stddev=0.02)))
     discriminator.add(LeakyReLU(0.2))
@@ -27,7 +39,7 @@ def default_discriminator(adam = default_adam):
     return discriminator
     
 
-def default_generator(randomDim = 100, adam = default_adam):
+def default_generator():
     #See: https://github.com/Zackory/Keras-MNIST-GAN/blob/master/mnist_dcgan.py
     # Generator
     generator = Sequential()

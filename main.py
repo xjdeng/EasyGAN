@@ -90,7 +90,8 @@ def train(X0, generator = None, discriminator = None, epochs=10, batchSize=128):
             # Labels for generated and real data
             yDis = np.zeros(2*batchSize)
             # One-sided label smoothing
-            yDis[:batchSize] = 0.1
+            yDis[0:batchSize] = np.random.uniform(0,0.3,batchSize)
+            yDis[:batchSize] = np.random.uniform(0.8,1.2,batchSize)
 
             # Train discriminator
             discriminator.trainable = True

@@ -55,6 +55,12 @@ def default_generator(myshape):
     generator.compile(loss='binary_crossentropy', optimizer=adam)
     return generator
 
+def create_adv_loss(discriminator):
+    #https://github.com/keras-team/keras/issues/6019
+    def loss(y_true, y_pred):
+        return K.log(1.0 - discriminator.predict(y_pred))
+    return loss
+
 def random_image(height, width):
     return np.random.randint(0,255,(height, width,3))
 

@@ -42,10 +42,12 @@ def default_discriminator(myshape):
 def default_generator(myshape):
     #See: https://github.com/Zackory/Keras-MNIST-GAN/blob/master/mnist_dcgan.py
     # Generator
+    x = myshape[0]
+    y = myshape[1]
     generator = Sequential()
-    generator.add(Dense(109*28*28, input_dim=randomDim, kernel_initializer=initializers.RandomNormal(stddev=0.02)))
+    generator.add(Dense(x*y*y, input_dim=randomDim, kernel_initializer=initializers.RandomNormal(stddev=0.02)))
     generator.add(LeakyReLU(0.2))
-    generator.add(Reshape((109, 28, 28)))
+    generator.add(Reshape((x, y, y)))
     #generator.add(UpSampling2D(size=(2, 2)))
     generator.add(Conv2D(64, kernel_size=(5, 5), padding='same'))
     generator.add(LeakyReLU(0.2))
@@ -82,13 +84,10 @@ def train(X0, generator = None, discriminator = None, epochs=10, batchSize=128):
         for _ in tqdm(range(batchCount)):
             # Get a random set of input noise and images
             noise = np.random.normal(0, 1, size=[batchSize, randomDim])
-            print(noise.shape)
             imageBatch = X[np.random.randint(0, X.shape[0], size=batchSize)]
 
             # Generate fake MNIST images
             generatedImages = generator.predict(noise)
-            print(imageBatch.shape)
-            print(generatedImages.shape)
             X = np.concatenate([imageBatch, generatedImages])
 
             # Labels for generated and real data
